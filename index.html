@@ -366,13 +366,13 @@
       .result-grid { grid-template-columns: 1fr; }
       .field.narrow { max-width: none; flex: 1; }
       .field.cost-field { min-width: auto; }
-      nav { gap: 6px; padding: 0 10px; flex-wrap: nowrap; }
-      .logo { font-size: 14px; flex-shrink: 0; }
-      .tabs { flex-shrink: 0; }
+      nav { gap: 6px; padding: 0 10px; height: auto; min-height: 52px; flex-wrap: nowrap; overflow-x: auto; }
+      .logo { font-size: 14px; flex-shrink: 0; white-space: nowrap; }
+      .tabs { flex-shrink: 0; white-space: nowrap; }
       .tab { font-size: 11px; padding: 0 6px; white-space: nowrap; }
-      .btn-auth { font-size: 10px; padding: 0 8px; height: 28px; }
+      .btn-auth { font-size: 10px; padding: 0 8px; height: 28px; white-space: nowrap; }
       .cta-sub { font-size: 9px; }
-      .auth-area { flex-shrink: 0; }
+      .auth-area { flex-shrink: 0; white-space: nowrap; }
       .page { padding: 12px; }
     }
 
