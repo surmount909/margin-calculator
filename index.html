@@ -520,6 +520,58 @@
     }
 
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ===== AUTH ===== */
+    .auth-area {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      -webkit-app-region: no-drag;
+    }
+
+    .auth-area img {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+    }
+
+    .auth-area .user-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #ccc;
+      max-width: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-auth {
+      height: 32px;
+      padding: 0 14px;
+      border: 1.5px solid var(--accent);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-auth:hover { background: var(--accent); color: #fff; }
+
+    .btn-auth.logout {
+      border-color: #555;
+      color: #999;
+      font-size: 11px;
+      padding: 0 10px;
+      height: 28px;
+    }
+
+    .btn-auth.logout:hover { background: #333; color: #fff; border-color: #666; }
   </style>
 </head>
 <body>
@@ -529,6 +581,9 @@
   <div class="tabs">
     <button class="tab active" id="tabCalc" onclick="switchTab('calc')">마진 계산기</button>
     <button class="tab" id="tabList" onclick="switchTab('list')">소싱 리스트 <span class="count" id="listCount">0</span></button>
+  </div>
+  <div class="auth-area" id="authArea">
+    <button class="btn-auth" id="btnLogin" onclick="googleLogin()">Google 로그인</button>
   </div>
 </nav>
 
@@ -635,7 +690,61 @@
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getAuth, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAisQimUwCjotYqNiD2H5ETFfdma7NfZ2s",
+    authDomain: "ralph-402f0.firebaseapp.com",
+    projectId: "ralph-402f0",
+    storageBucket: "ralph-402f0.firebasestorage.app",
+    messagingSenderId: "1023866504845",
+    appId: "1:1023866504845:web:9bb1629f001fc06ef704c4",
+    measurementId: "G-B97VXGP1W2"
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const auth = getAuth(fbApp);
+  const provider = new GoogleAuthProvider();
+
+  let currentUser = null;
+
+  window.googleLogin = async function() {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch(e) {
+      if(e.code !== 'auth/popup-closed-by-user') showToast('로그인 실패',true);
+    }
+  };
+
+  window.googleLogout = async function() {
+    await signOut(auth);
+  };
+
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    const area = document.getElementById('authArea');
+    if(user) {
+      area.innerHTML = `
+        <img src="${user.photoURL || ''}" alt="" onerror="this.style.display='none'">
+        <span class="user-name">${user.displayName || user.email}</span>
+        <button class="btn-auth logout" onclick="googleLogout()">로그아웃</button>`;
+    } else {
+      area.innerHTML = `<button class="btn-auth" onclick="googleLogin()">Google 로그인</button>`;
+    }
+    updateCount();
+  });
+
+  window.requireLogin = function() {
+    if(!currentUser) {
+      showToast('로그인이 필요합니다',true);
+      googleLogin();
+      return false;
+    }
+    return true;
+  };
+
   let items = JSON.parse(localStorage.getItem('ralph_items') || '[]');
   let expandedId = null;
   let saverOn = false;
@@ -780,6 +889,7 @@
   }
 
   function addToList(){
+    if(!requireLogin()) return;
     const inp=getCalcInputs(), kw=document.getElementById('c_keyword').value.trim();
     const cny=parseFloat(document.getElementById('c_cny').value)||0;
     if(!kw){showToast('키워드를 입력해주세요',true);return;}
@@ -909,6 +1019,22 @@
 
   function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
   function ea(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  // module에서 onclick 연결
+  window.switchTab = switchTab;
+  window.toggleSaver = toggleSaver;
+  window.setCurrency = setCurrency;
+  window.cnyChanged = cnyChanged;
+  window.calcMargin = calcMargin;
+  window.resetCalc = resetCalc;
+  window.addToList = addToList;
+  window.editItem = editItem;
+  window.uf = uf;
+  window.tog = tog;
+  window.rm = rm;
+  window.clearAll = clearAll;
+  window.exportCSV = exportCSV;
+  window.showToast = showToast;
 
   calcMargin();
   updateCount();
