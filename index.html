@@ -359,7 +359,7 @@
     /* ===== RESULT 3열 ===== */
     .result-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
 
@@ -481,6 +481,18 @@
       font-size: 24px;
       font-weight: 900;
       color: var(--text);
+    }
+
+    .summary-item.accent {
+      background: var(--accent);
+    }
+
+    .summary-item.accent .summary-lbl {
+      color: rgba(255,255,255,0.7);
+    }
+
+    .summary-item.accent .summary-val {
+      color: #fff;
     }
 
     .positive { color: var(--green) !important; }
@@ -765,17 +777,15 @@
   </div>
 
   <div class="summary-bar">
-    <div class="summary-item"><span class="summary-lbl">마진</span><span class="summary-val" id="o_margin">0원</span></div>
-    <div class="summary-item"><span class="summary-lbl">마진율</span><span class="summary-val" id="o_mrate">0.0%</span></div>
+    <div class="summary-item"><span class="summary-lbl">개당 마진</span><span class="summary-val" id="o_margin">0원</span></div>
+    <div class="summary-item accent"><span class="summary-lbl">마진율</span><span class="summary-val" id="o_mrate">0.0%</span></div>
     <div class="summary-item"><span class="summary-lbl">예상 월매출</span><span class="summary-val" id="o_estr">0원</span></div>
-    <div class="summary-item"><span class="summary-lbl">예상 월마진</span><span class="summary-val" id="o_estm">0원</span></div>
-    <div class="summary-item"><span class="summary-lbl">총마진</span><span class="summary-val" id="o_tmargin">0원</span></div>
-    <div class="summary-item"><span class="summary-lbl">총마진율</span><span class="summary-val" id="o_tmrate">0.0%</span></div>
+    <div class="summary-item accent"><span class="summary-lbl">예상 월마진</span><span class="summary-val" id="o_estm">0원</span></div>
   </div>
 
   <div class="result-grid">
     <div class="card">
-      <div class="card-title">개당 마진</div>
+      <div class="card-title">개당 마진 상세</div>
       <div class="row"><span class="lbl">판매가</span><span class="val" id="o_sp">0원</span></div>
       <div class="row"><span class="lbl">원가 (한화)</span><span class="val" id="o_cp">0원</span></div>
       <div class="row"><span class="lbl">입출고배송비</span><span class="val" id="o_sf">0원</span></div>
@@ -783,18 +793,14 @@
       <div class="row"><span class="lbl" id="o_clabel">판매수수료 (10.8%)</span><span class="val" id="o_comm">0원</span></div>
       <div class="row"><span class="lbl">판매수수료 VAT</span><span class="val" id="o_cvat">0원</span></div>
       <div class="row"><span class="lbl">부가세</span><span class="val" id="o_vat">0원</span></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">반품 비용 / 월 예상</div>
+      <div class="sep"></div>
       <div class="row"><span class="lbl">반품회수비 (VAT 포함)</span><span class="val" id="o_retfee">0원</span></div>
       <div class="row"><span class="lbl">반품재입고비 (VAT 포함)</span><span class="val" id="o_restock">0원</span></div>
-      <div class="sep"></div>
-      <div class="row"><span class="lbl">예상 월판매량</span><span class="val" id="o_estq">0개</span></div>
     </div>
 
     <div class="card">
-      <div class="card-title" id="o_totHeader">총 마진 (100개, 반품 8.0%)</div>
+      <div class="card-title">월 예상</div>
+      <div class="row"><span class="lbl">예상 월판매량</span><span class="val" id="o_estq">0개</span></div>
       <div class="row"><span class="lbl">총매출</span><span class="val" id="o_trev">0원</span></div>
       <div class="row"><span class="lbl">총비용</span><span class="val" id="o_tcosts">0원</span></div>
       <div class="row"><span class="lbl">총반품비용</span><span class="val" id="o_treturn">0원</span></div>
