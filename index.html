@@ -858,7 +858,7 @@
         <span class="user-name">${user.displayName || user.email}</span>
         <button class="btn-auth logout" onclick="googleLogout()">로그아웃</button>`;
     } else {
-      area.innerHTML = `<button class="btn-auth" onclick="googleLogin()">Google 로그인</button>`;
+      area.innerHTML = `<div class="auth-cta"><button class="btn-auth white" onclick="googleLogin()">로그인 / 가입</button><div class="cta-sub" onclick="googleLogin()">지금 가입하고 무료이용하기 ✨</div></div>`;
     }
     updateCount();
   });
