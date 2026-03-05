@@ -366,6 +366,12 @@
       .result-grid { grid-template-columns: 1fr; }
       .field.narrow { max-width: none; flex: 1; }
       .field.cost-field { min-width: auto; }
+      nav { gap: 8px; padding: 0 12px; }
+      .logo { font-size: 15px; }
+      .tab { font-size: 11px; padding: 0 8px; }
+      .btn-auth { font-size: 10px; padding: 0 8px; height: 28px; }
+      .cta-sub { font-size: 9px; }
+      .page { padding: 12px; }
     }
 
     .card {
@@ -573,6 +579,14 @@
 
     .btn-auth.logout:hover { background: #333; color: #fff; border-color: #666; }
 
+    .btn-auth.white {
+      background: #fff;
+      border-color: #fff;
+      color: var(--text);
+    }
+
+    .btn-auth.white:hover { background: #e8f5e9; border-color: #e8f5e9; }
+
     .auth-cta {
       position: relative;
       display: flex;
@@ -621,7 +635,7 @@
   </div>
   <div class="auth-area" id="authArea">
     <div class="auth-cta" id="authCta">
-      <button class="btn-auth" onclick="googleLogin()">로그인 / 가입</button>
+      <button class="btn-auth white" onclick="googleLogin()">로그인 / 가입</button>
       <div class="cta-sub" onclick="googleLogin()">지금 가입하고 무료이용하기 ✨</div>
     </div>
   </div>
