@@ -23,6 +23,7 @@
   <meta name="twitter:title" content="마진 계산기 - 쿠팡 로켓그로스 이커머스 마진율 계산 | 랄프">
   <meta name="twitter:description" content="쿠팡 로켓그로스, 스마트스토어 셀러를 위한 무료 마진 계산기. 수수료, 부가세, 배송비, 반품비까지 자동 계산.">
 
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%232196F3'/><text x='32' y='46' text-anchor='middle' font-family='Arial Black' font-weight='900' font-size='42' fill='white'>R</text></svg>">
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -452,6 +453,36 @@
     .big-row .lbl { font-size: 13px; font-weight: 700; color: var(--text); }
     .big-row .val { font-size: 18px; font-weight: 800; }
 
+    .summary-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .summary-item {
+      flex: 1;
+      min-width: 120px;
+      background: var(--accent-light);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .summary-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+    }
+
+    .summary-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
     .positive { color: var(--green) !important; }
     .negative { color: var(--red) !important; }
 
@@ -665,7 +696,7 @@
 
 <nav>
   <button class="hamburger" onclick="toggleMenu()">☰</button>
-  <div class="logo">랄프</div>
+  <div class="logo"><svg width="28" height="28" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="var(--accent)"/><text x="32" y="46" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="42" fill="white">R</text></svg></div>
   <div class="tabs">
     <button class="tab active" id="tabCalc" onclick="switchTab('calc')">마진 계산기</button>
     <button class="tab" id="tabList" onclick="switchTab('list')">소싱 리스트 <span class="count" id="listCount">0</span></button>
@@ -733,6 +764,15 @@
     </div>
   </div>
 
+  <div class="summary-bar">
+    <div class="summary-item"><span class="summary-lbl">마진</span><span class="summary-val" id="o_margin">0원</span></div>
+    <div class="summary-item"><span class="summary-lbl">마진율</span><span class="summary-val" id="o_mrate">0.0%</span></div>
+    <div class="summary-item"><span class="summary-lbl">예상 월매출</span><span class="summary-val" id="o_estr">0원</span></div>
+    <div class="summary-item"><span class="summary-lbl">예상 월마진</span><span class="summary-val" id="o_estm">0원</span></div>
+    <div class="summary-item"><span class="summary-lbl">총마진</span><span class="summary-val" id="o_tmargin">0원</span></div>
+    <div class="summary-item"><span class="summary-lbl">총마진율</span><span class="summary-val" id="o_tmrate">0.0%</span></div>
+  </div>
+
   <div class="result-grid">
     <div class="card">
       <div class="card-title">개당 마진</div>
@@ -743,9 +783,6 @@
       <div class="row"><span class="lbl" id="o_clabel">판매수수료 (10.8%)</span><span class="val" id="o_comm">0원</span></div>
       <div class="row"><span class="lbl">판매수수료 VAT</span><span class="val" id="o_cvat">0원</span></div>
       <div class="row"><span class="lbl">부가세</span><span class="val" id="o_vat">0원</span></div>
-      <div class="sep"></div>
-      <div class="big-row"><span class="lbl">마진</span><span class="val" id="o_margin">0원</span></div>
-      <div class="big-row"><span class="lbl">마진율</span><span class="val" id="o_mrate">0.0%</span></div>
     </div>
 
     <div class="card">
@@ -754,8 +791,6 @@
       <div class="row"><span class="lbl">반품재입고비 (VAT 포함)</span><span class="val" id="o_restock">0원</span></div>
       <div class="sep"></div>
       <div class="row"><span class="lbl">예상 월판매량</span><span class="val" id="o_estq">0개</span></div>
-      <div class="big-row"><span class="lbl">예상 월매출</span><span class="val" id="o_estr">0원</span></div>
-      <div class="big-row"><span class="lbl">예상 월마진</span><span class="val" id="o_estm">0원</span></div>
     </div>
 
     <div class="card">
@@ -764,9 +799,6 @@
       <div class="row"><span class="lbl">총비용</span><span class="val" id="o_tcosts">0원</span></div>
       <div class="row"><span class="lbl">총반품비용</span><span class="val" id="o_treturn">0원</span></div>
       <div class="row"><span class="lbl">총부가세</span><span class="val" id="o_tvat">0원</span></div>
-      <div class="sep"></div>
-      <div class="big-row"><span class="lbl">총마진</span><span class="val" id="o_tmargin">0원</span></div>
-      <div class="big-row"><span class="lbl">총마진율</span><span class="val" id="o_tmrate">0.0%</span></div>
     </div>
   </div>
 </div>
