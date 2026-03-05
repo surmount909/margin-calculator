@@ -572,6 +572,23 @@
     }
 
     .btn-auth.logout:hover { background: #333; color: #fff; border-color: #666; }
+
+    .auth-cta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .cta-sub {
+      font-size: 10px;
+      color: var(--accent);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+
+    .cta-sub:hover { opacity: 0.7; }
   </style>
 </head>
 <body>
@@ -583,7 +600,10 @@
     <button class="tab" id="tabList" onclick="switchTab('list')">소싱 리스트 <span class="count" id="listCount">0</span></button>
   </div>
   <div class="auth-area" id="authArea">
-    <button class="btn-auth" id="btnLogin" onclick="googleLogin()">Google 로그인</button>
+    <div class="auth-cta" id="authCta">
+      <button class="btn-auth" onclick="googleLogin()">로그인 / 가입</button>
+      <div class="cta-sub" onclick="googleLogin()">지금 가입하고 무료이용하기 ✨</div>
+    </div>
   </div>
 </nav>
 
