@@ -574,21 +574,41 @@
     .btn-auth.logout:hover { background: #333; color: #fff; border-color: #666; }
 
     .auth-cta {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
     }
 
     .cta-sub {
-      font-size: 10px;
-      color: var(--accent);
-      cursor: pointer;
+      position: absolute;
+      top: 38px;
+      right: 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      background: #fff;
+      padding: 6px 12px;
+      border-radius: 8px;
       white-space: nowrap;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       transition: opacity 0.15s;
     }
 
-    .cta-sub:hover { opacity: 0.7; }
+    .cta-sub::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      right: 20px;
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      transform: rotate(45deg);
+      box-shadow: -1px -1px 2px rgba(0,0,0,0.05);
+    }
+
+    .cta-sub:hover { opacity: 0.8; }
   </style>
 </head>
 <body>
