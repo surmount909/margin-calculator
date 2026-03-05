@@ -976,7 +976,7 @@
   function pct(n){return(n*100).toFixed(1)+'%';}
   function sc(n){return n>0?'positive':n<0?'negative':'';}
   function setText(id,t){const e=document.getElementById(id);if(e)e.textContent=t;}
-  function setVal(id,cls,t){const e=document.getElementById(id);if(e){e.textContent=t;e.className='val '+cls;}}
+  function setVal(id,cls,t){const e=document.getElementById(id);if(e){e.textContent=t;const base=e.className.replace(/\b(val|summary-val|positive|negative)\b/g,'').trim();e.className=(base?base+' ':'')+cls;}}
 
   function calcMargin(){
     const{selling:C,cost:F,shipping:G,commRate:H,views:P,qty:U,retRate:V}=getCalcInputs();
