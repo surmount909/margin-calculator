@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>랄프 - 마진 계산기</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f6f4;
+      --surface: #ffffff;
+      --surface2: #f0f2ed;
+      --border: #dfe3d8;
+      --text: #1a1d17;
+      --text2: #5f6b52;
+      --text3: #97a389;
+      --accent: #4caf50;
+      --accent-dark: #388e3c;
+      --accent-light: #e8f5e9;
+      --green: #2e7d32;
+      --green-bg: #e8f5e9;
+      --red: #c62828;
+      --red-bg: #ffebee;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: 'Pretendard', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ===== NAV ===== */
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      padding: 0 28px;
+      height: 52px;
+      background: #1a1d17;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      -webkit-app-region: drag;
+    }
+
+    nav button, nav input, nav .tabs { -webkit-app-region: no-drag; }
+
+    .logo {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .tabs { display: flex; height: 100%; }
+
+    .tab {
+      padding: 0 16px;
+      border: none;
+      border-bottom: 2.5px solid transparent;
+      background: none;
+      color: #7a8570;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      transition: color 0.15s;
+    }
+
+    .tab.active { color: #fff; border-bottom-color: var(--accent); }
+    .tab:hover:not(.active) { color: #bbb; }
+
+    .tab .count {
+      margin-left: 6px;
+      min-width: 18px; height: 18px;
+      padding: 0 5px;
+      border-radius: 9px;
+      font-size: 11px; font-weight: 700;
+      display: inline-flex;
+      align-items: center; justify-content: center;
+    }
+
+    .tab.active .count { background: var(--accent); color: #fff; }
+    .tab:not(.active) .count { background: #333; color: #888; }
+
+    /* ===== PAGE ===== */
+    .page { display: none; padding: 20px 28px; max-width: 1400px; margin: 0 auto; }
+    .page.active { display: block; }
+
+    /* ===== INPUT BAR ===== */
+    .input-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 14px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      min-width: 110px;
+    }
+
+    .field.narrow { max-width: 100px; flex: 0 0 100px; }
+    .field.keyword { min-width: 150px; flex: 1.4; }
+    .field.cost-field { min-width: 200px; flex: 1.6; }
+
+    .field label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+    }
+
+    .field .iw { position: relative; }
+
+    .field input {
+      width: 100%;
+      height: 36px;
+      padding: 0 26px 0 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .field input:focus { border-color: var(--accent); }
+    .field input::placeholder { color: var(--text3); }
+
+    .field .su {
+      position: absolute;
+      right: 8px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: var(--text3);
+      pointer-events: none;
+    }
+
+    /* 원가 위안 + 한화 표시 */
+    .cost-wrap {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .cost-wrap .iw { flex: 1; }
+
+    .cost-krw {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-dark);
+      background: var(--accent-light);
+      padding: 0 10px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      min-width: 90px;
+    }
+
+    /* 통화 토글 */
+    .cost-toggle {
+      display: inline-flex;
+      gap: 0;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .cur-btn {
+      padding: 1px 7px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text3);
+      font-size: 10px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .cur-btn:first-child { border-radius: 4px 0 0 4px; }
+    .cur-btn:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+
+    .cur-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* 환율 인라인 (라벨 옆) */
+    .rate-inline {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text3);
+      margin-left: 4px;
+    }
+
+    .rate-inline input {
+      width: 42px;
+      height: 18px;
+      padding: 0 3px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 10px;
+      font-family: inherit;
+      text-align: center;
+      color: var(--text2);
+      background: var(--surface);
+      outline: none;
+      vertical-align: middle;
+    }
+
+    .rate-inline input:focus { border-color: var(--accent); }
+
+    /* 세이버 토글 */
+    .saver-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 130px;
+    }
+
+    .saver-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+    }
+
+    .saver-row {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      height: 36px;
+    }
+
+    .saver-btn {
+      height: 36px;
+      padding: 0 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--text2);
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .saver-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .saver-btn:not(.active):hover {
+      border-color: var(--text3);
+    }
+
+    .saver-row input {
+      width: 60px;
+      height: 36px;
+      padding: 0 22px 0 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      outline: none;
+    }
+
+    .saver-row input:focus { border-color: var(--accent); }
+
+    .saver-row .su {
+      position: relative;
+      margin-left: -20px;
+      font-size: 11px;
+      color: var(--text3);
+      pointer-events: none;
+    }
+
+    .btn-add-list {
+      height: 36px;
+      padding: 0 18px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-add-list:hover { background: var(--accent-dark); }
+
+    .btn-reset {
+      height: 36px;
+      padding: 0 14px;
+      background: var(--red-bg);
+      color: var(--red);
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-reset:hover { background: #ffcdd2; }
+
+    /* ===== RESULT 3열 ===== */
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 960px) { .result-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) {
+      .result-grid { grid-template-columns: 1fr; }
+      .field.narrow { max-width: none; flex: 1; }
+      .field.cost-field { min-width: auto; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text2);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 12px;
+    }
+
+    .row .lbl { color: var(--text2); }
+    .row .val { font-weight: 600; text-align: right; }
+
+    .sep { height: 1px; background: var(--border); margin: 6px 0; }
+
+    .big-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--accent-light);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-top: 6px;
+    }
+
+    .big-row .lbl { font-size: 13px; font-weight: 700; color: var(--text); }
+    .big-row .val { font-size: 18px; font-weight: 800; }
+
+    .positive { color: var(--green) !important; }
+    .negative { color: var(--red) !important; }
+
+    /* ===== LIST ===== */
+    .list-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .list-top h2 { font-size: 18px; font-weight: 700; }
+    .list-btns { display: flex; gap: 6px; }
+
+    .btn-sm {
+      height: 32px; padding: 0 14px;
+      border-radius: 8px; font-size: 12px; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--text2);
+      transition: all 0.15s;
+    }
+
+    .btn-sm:hover { border-color: var(--text2); color: var(--text); }
+    .btn-sm.danger { color: var(--red); border-color: transparent; background: var(--red-bg); }
+    .btn-sm.danger:hover { background: #ffcdd2; }
+
+    .tbl {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+
+    .tbl th {
+      text-align: left; padding: 8px 12px;
+      font-size: 11px; font-weight: 600; color: var(--text2);
+      background: var(--surface2); border-bottom: 1px solid var(--border);
+    }
+
+    .tbl td {
+      padding: 8px 12px; font-size: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tbl tr:last-child td { border-bottom: none; }
+    .tbl tr:hover td { background: var(--surface2); }
+
+    .pill {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 12px; font-size: 11px; font-weight: 700;
+    }
+
+    .pill.pos { background: var(--green-bg); color: var(--green); }
+    .pill.neg { background: var(--red-bg); color: var(--red); }
+    .pill.zero { background: var(--surface2); color: var(--text3); }
+
+    .tbl .il {
+      width: 100%; padding: 4px 8px;
+      border: 1px solid transparent; border-radius: 6px;
+      background: var(--bg); font-size: 12px;
+      font-family: inherit; color: var(--text); outline: none;
+    }
+
+    .tbl .il:focus { border-color: var(--accent); }
+
+    .acts { display: flex; gap: 4px; }
+
+    .acts button {
+      padding: 3px 8px; border: none; border-radius: 5px;
+      font-size: 11px; font-family: inherit; cursor: pointer;
+      background: var(--surface2); color: var(--text2);
+    }
+
+    .acts button:hover { color: var(--text); }
+    .acts .dl:hover { background: var(--red-bg); color: var(--red); }
+
+    .exp-row td { padding: 0 !important; }
+
+    .exp-inner {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px; padding: 12px 16px; background: var(--bg);
+    }
+
+    .exp-sec h5 {
+      font-size: 10px; font-weight: 700; color: var(--text3);
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+
+    .exp-sec .dr {
+      display: flex; justify-content: space-between;
+      padding: 2px 0; font-size: 11px;
+    }
+
+    .exp-sec .dr .k { color: var(--text2); }
+    .exp-sec .dr .v { font-weight: 600; }
+
+    .empty-state {
+      text-align: center; padding: 60px 20px;
+      color: var(--text3); font-size: 13px;
+    }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      padding: 10px 20px; border-radius: 8px;
+      font-size: 13px; font-weight: 600; color: #fff;
+      opacity: 0; transition: all 0.25s; z-index: 999;
+    }
+
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">랄프</div>
+  <div class="tabs">
+    <button class="tab active" id="tabCalc" onclick="switchTab('calc')">마진 계산기</button>
+    <button class="tab" id="tabList" onclick="switchTab('list')">소싱 리스트 <span class="count" id="listCount">0</span></button>
+  </div>
+</nav>
+
+<!-- ===== 마진 계산기 ===== -->
+<div class="page active" id="pageCalc">
+  <div class="input-bar">
+    <div class="input-row">
+      <div class="field keyword">
+        <label>키워드</label>
+        <div class="iw"><input type="text" id="c_keyword" placeholder="상품명"></div>
+      </div>
+      <div class="field">
+        <label>판매가</label>
+        <div class="iw"><input type="number" id="c_selling" placeholder="0" oninput="calcMargin()"><span class="su">원</span></div>
+      </div>
+      <div class="field cost-field">
+        <label>원가 <span class="cost-toggle"><button type="button" class="cur-btn active" id="curCny" onclick="setCurrency('cny')" tabindex="-1">위안</button><button type="button" class="cur-btn" id="curKrw" onclick="setCurrency('krw')" tabindex="-1">한화</button></span><span class="rate-inline" id="rateWrap">×<input type="number" id="c_exRate" value="320" step="1" oninput="cnyChanged()" tabindex="-1"></span></label>
+        <div class="cost-wrap" id="costCnyWrap">
+          <div class="iw"><input type="number" id="c_cny" placeholder="0" oninput="cnyChanged()" step="0.01"><span class="su">¥</span></div>
+          <div class="cost-krw" id="c_krwDisplay">= 0원</div>
+        </div>
+        <div class="iw" id="costKrwWrap" style="display:none">
+          <input type="number" id="c_costKrw" placeholder="0" oninput="calcMargin()"><span class="su">원</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>배송비</label>
+        <div class="iw"><input type="number" id="c_shipping" placeholder="0" oninput="calcMargin()"><span class="su">원</span></div>
+      </div>
+      <div class="field narrow">
+        <label>수수료</label>
+        <div class="iw"><input type="number" id="c_commRate" value="10.8" step="0.1" oninput="calcMargin()"><span class="su">%</span></div>
+      </div>
+      <div class="field narrow">
+        <label>28일 조회수</label>
+        <div class="iw"><input type="number" id="c_views" placeholder="0" oninput="calcMargin()"><span class="su">회</span></div>
+      </div>
+      <div class="field narrow" style="display:none">
+        <label>예상판매량</label>
+        <div class="iw"><input type="number" id="c_qty" value="100" oninput="calcMargin()"><span class="su">개</span></div>
+      </div>
+      <div class="saver-group">
+        <label>반품</label>
+        <div class="saver-row">
+          <button class="saver-btn" id="saverBtn" onclick="toggleSaver()">세이버</button>
+          <input type="number" id="c_retRate" value="8" step="0.1" oninput="calcMargin()">
+          <span class="su">%</span>
+        </div>
+      </div>
+      <button class="btn-add-list" id="btnAddList" onclick="addToList()">리스트 추가</button>
+      <button class="btn-reset" onclick="resetCalc()">초기화</button>
+    </div>
+  </div>
+
+  <div class="result-grid">
+    <div class="card">
+      <div class="card-title">개당 마진</div>
+      <div class="row"><span class="lbl">판매가</span><span class="val" id="o_sp">0원</span></div>
+      <div class="row"><span class="lbl">원가 (한화)</span><span class="val" id="o_cp">0원</span></div>
+      <div class="row"><span class="lbl">입출고배송비</span><span class="val" id="o_sf">0원</span></div>
+      <div class="row"><span class="lbl">입출고비용 VAT</span><span class="val" id="o_svat">0원</span></div>
+      <div class="row"><span class="lbl" id="o_clabel">판매수수료 (10.8%)</span><span class="val" id="o_comm">0원</span></div>
+      <div class="row"><span class="lbl">판매수수료 VAT</span><span class="val" id="o_cvat">0원</span></div>
+      <div class="row"><span class="lbl">부가세</span><span class="val" id="o_vat">0원</span></div>
+      <div class="sep"></div>
+      <div class="big-row"><span class="lbl">마진</span><span class="val" id="o_margin">0원</span></div>
+      <div class="big-row"><span class="lbl">마진율</span><span class="val" id="o_mrate">0.0%</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">반품 비용 / 월 예상</div>
+      <div class="row"><span class="lbl">반품회수비 (VAT 포함)</span><span class="val" id="o_retfee">0원</span></div>
+      <div class="row"><span class="lbl">반품재입고비 (VAT 포함)</span><span class="val" id="o_restock">0원</span></div>
+      <div class="sep"></div>
+      <div class="row"><span class="lbl">예상 월판매량</span><span class="val" id="o_estq">0개</span></div>
+      <div class="big-row"><span class="lbl">예상 월매출</span><span class="val" id="o_estr">0원</span></div>
+      <div class="big-row"><span class="lbl">예상 월마진</span><span class="val" id="o_estm">0원</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" id="o_totHeader">총 마진 (100개, 반품 8.0%)</div>
+      <div class="row"><span class="lbl">총매출</span><span class="val" id="o_trev">0원</span></div>
+      <div class="row"><span class="lbl">총비용</span><span class="val" id="o_tcosts">0원</span></div>
+      <div class="row"><span class="lbl">총반품비용</span><span class="val" id="o_treturn">0원</span></div>
+      <div class="row"><span class="lbl">총부가세</span><span class="val" id="o_tvat">0원</span></div>
+      <div class="sep"></div>
+      <div class="big-row"><span class="lbl">총마진</span><span class="val" id="o_tmargin">0원</span></div>
+      <div class="big-row"><span class="lbl">총마진율</span><span class="val" id="o_tmrate">0.0%</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 소싱 리스트 ===== -->
+<div class="page" id="pageList">
+  <div class="list-top">
+    <h2>소싱 리스트</h2>
+    <div class="list-btns">
+      <button class="btn-sm" onclick="exportCSV()">CSV 내보내기</button>
+      <button class="btn-sm danger" onclick="clearAll()">전체 삭제</button>
+    </div>
+  </div>
+  <div id="listContainer"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let items = JSON.parse(localStorage.getItem('ralph_items') || '[]');
+  let expandedId = null;
+  let saverOn = false;
+  let costMode = 'cny'; // 'cny' or 'krw'
+  let editingId = null;
+
+  function saveItems() { localStorage.setItem('ralph_items', JSON.stringify(items)); }
+
+  function switchTab(tab) {
+    document.getElementById('tabCalc').classList.toggle('active', tab === 'calc');
+    document.getElementById('tabList').classList.toggle('active', tab === 'list');
+    document.getElementById('pageCalc').classList.toggle('active', tab === 'calc');
+    document.getElementById('pageList').classList.toggle('active', tab === 'list');
+    if (tab === 'list') renderList();
+  }
+
+  // 세이버 토글
+  function toggleSaver() {
+    saverOn = !saverOn;
+    const btn = document.getElementById('saverBtn');
+    const inp = document.getElementById('c_retRate');
+    btn.classList.toggle('active', saverOn);
+    if (saverOn) {
+      inp.value = '0';
+      inp.disabled = true;
+      inp.style.opacity = '0.4';
+    } else {
+      inp.value = '8';
+      inp.disabled = false;
+      inp.style.opacity = '1';
+    }
+    calcMargin();
+  }
+
+  // 통화 전환
+  function setCurrency(mode) {
+    costMode = mode;
+    document.getElementById('curCny').classList.toggle('active', mode === 'cny');
+    document.getElementById('curKrw').classList.toggle('active', mode === 'krw');
+    document.getElementById('costCnyWrap').style.display = mode === 'cny' ? '' : 'none';
+    document.getElementById('rateWrap').style.display = mode === 'cny' ? '' : 'none';
+    document.getElementById('costKrwWrap').style.display = mode === 'krw' ? '' : 'none';
+    calcMargin();
+  }
+
+  // 위안 → 한화 변환
+  function getExRate() {
+    return parseFloat(document.getElementById('c_exRate').value) || 320;
+  }
+
+  function cnyChanged() {
+    const cny = parseFloat(document.getElementById('c_cny').value) || 0;
+    const rate = getExRate();
+    const krw = Math.round(cny * rate);
+    document.getElementById('c_krwDisplay').textContent = '= ' + krw.toLocaleString('ko-KR') + '원';
+    calcMargin();
+  }
+
+  function getCostKRW() {
+    if (costMode === 'krw') {
+      return parseFloat(document.getElementById('c_costKrw').value) || 0;
+    }
+    const cny = parseFloat(document.getElementById('c_cny').value) || 0;
+    return Math.round(cny * getExRate());
+  }
+
+  function getCalcInputs() {
+    return {
+      selling: parseFloat(document.getElementById('c_selling').value) || 0,
+      cost: getCostKRW(),
+      shipping: parseFloat(document.getElementById('c_shipping').value) || 0,
+      commRate: (parseFloat(document.getElementById('c_commRate').value) || 0) / 100,
+      views: parseFloat(document.getElementById('c_views').value) || 0,
+      qty: Math.round((parseFloat(document.getElementById('c_views').value) || 0) * 0.03),
+      retRate: (parseFloat(document.getElementById('c_retRate').value) || 0) / 100,
+    };
+  }
+
+  function compute(C, F, G, H, P, U, V) {
+    const I=G*0.1, J=C*H, K=J*0.1;
+    const L=(C-C/1.1)-(F-F/1.1)-I-K;
+    const M=C-F-G-I-J-K-L;
+    const N=C>0?M/C:0;
+    const O=N!==0?(11000/N)/10000:0;
+    const Q=P*0.03, R=Q*C, S=Math.round(Q)*Math.round(M);
+    const W=G*0.5, X=W*0.1;
+    let Y; if(C<5000)Y=300;else if(C<10000)Y=400;else if(C<15000)Y=600;else if(C<20000)Y=800;else Y=1000;
+    const Z=Y*0.1;
+    const AA=C*U,AB=F*U,AC=G*U,AD=AC*0.1,AE=J*U,AF=AE*0.1;
+    const AG=W*U*V,AH=AG*0.1,AI=Y*U*V,AJ=AI*0.1;
+    const AK=((AA-AA/1.1)-(AB-AB/1.1))-AD-AF-AH-AJ;
+    const AL=AA-AB-AC-AD-AE-AF-AG-AH-AI-AJ-AK;
+    const AM=AA>0?AL/AA:0, AN=AM!==0?(11000/AM)/10000:0;
+    return{shippingVat:I,commission:J,commissionVat:K,vat:L,margin:M,marginRate:N,minAdRoas:O,
+      estQty:Q,estRev:R,estMargin:S,returnFee:W,returnFeeVat:X,restockFee:Y,restockFeeVat:Z,
+      totalRev:AA,totalCost:AB,totalShip:AC,totalShipVat:AD,totalComm:AE,totalCommVat:AF,
+      totalRetFee:AG,totalRetFeeVat:AH,totalRestock:AI,totalRestockVat:AJ,
+      totalVat:AK,totalMargin:AL,totalMarginRate:AM,totalMinRoas:AN,commRate:H,qty:U,retRate:V};
+  }
+
+  function fmt(n){return Math.round(n).toLocaleString('ko-KR');}
+  function pct(n){return(n*100).toFixed(1)+'%';}
+  function sc(n){return n>0?'positive':n<0?'negative':'';}
+  function setText(id,t){const e=document.getElementById(id);if(e)e.textContent=t;}
+  function setVal(id,cls,t){const e=document.getElementById(id);if(e){e.textContent=t;e.className='val '+cls;}}
+
+  function calcMargin(){
+    const{selling:C,cost:F,shipping:G,commRate:H,views:P,qty:U,retRate:V}=getCalcInputs();
+    const r=compute(C,F,G,H,P,U,V);
+    setText('o_sp',fmt(C)+'원'); setText('o_cp','-'+fmt(F)+'원');
+    setText('o_sf','-'+fmt(G)+'원'); setText('o_svat','-'+fmt(r.shippingVat)+'원');
+    setText('o_clabel','판매수수료 ('+(H*100).toFixed(1)+'%)');
+    setText('o_comm','-'+fmt(r.commission)+'원'); setText('o_cvat','-'+fmt(r.commissionVat)+'원');
+    setText('o_vat','-'+fmt(r.vat)+'원');
+    setVal('o_margin',sc(r.margin),fmt(r.margin)+'원');
+    setVal('o_mrate',sc(r.marginRate),pct(r.marginRate));
+    setText('o_roas',r.minAdRoas>0?fmt(r.minAdRoas)+'%':'-');
+    setText('o_retfee',fmt(r.returnFee+r.returnFeeVat)+'원');
+    setText('o_restock',fmt(r.restockFee+r.restockFeeVat)+'원');
+    setText('o_estq',r.estQty.toFixed(1)+'개'); setText('o_estr',fmt(r.estRev)+'원');
+    setVal('o_estm',sc(r.estMargin),fmt(r.estMargin)+'원');
+    setText('o_totHeader','총 마진 (예상 '+U+'개, 반품 '+(V*100).toFixed(1)+'%)');
+    setText('o_trev',fmt(r.totalRev)+'원');
+    setText('o_tcosts','-'+fmt(r.totalCost+r.totalShip+r.totalShipVat+r.totalComm+r.totalCommVat)+'원');
+    setText('o_treturn','-'+fmt(r.totalRetFee+r.totalRetFeeVat+r.totalRestock+r.totalRestockVat)+'원');
+    setText('o_tvat','-'+fmt(r.totalVat)+'원');
+    setVal('o_tmargin',sc(r.totalMargin),fmt(r.totalMargin)+'원');
+    setVal('o_tmrate',sc(r.totalMarginRate),pct(r.totalMarginRate));
+    setText('o_troas',r.totalMinRoas>0?fmt(r.totalMinRoas)+'%':'-');
+  }
+
+  function resetCalc(){
+    if(editingId) clearEditMode();
+    document.getElementById('c_keyword').value='';
+    document.getElementById('c_selling').value='';
+    document.getElementById('c_cny').value='';
+    document.getElementById('c_costKrw').value='';
+    document.getElementById('c_shipping').value='';
+    document.getElementById('c_views').value='';
+    if(saverOn) toggleSaver();
+    cnyChanged(); calcMargin();
+  }
+
+  function addToList(){
+    const inp=getCalcInputs(), kw=document.getElementById('c_keyword').value.trim();
+    const cny=parseFloat(document.getElementById('c_cny').value)||0;
+    if(!kw){showToast('키워드를 입력해주세요',true);return;}
+    if(editingId){
+      const it=items.find(i=>i.id===editingId);
+      if(it){
+        it.keyword=kw;it.selling=inp.selling;it.costCny=cny;it.cost=inp.cost;it.shipping=inp.shipping;
+        it.commRate=inp.commRate*100;it.views=inp.views;it.qty=inp.qty;it.retRate=inp.retRate*100;it.saver=saverOn;
+      }
+      showToast('"'+kw+'" 수정됨');
+      clearEditMode();
+    }else{
+      items.push({id:Date.now(),keyword:kw,selling:inp.selling,costCny:cny,cost:inp.cost,shipping:inp.shipping,
+        commRate:inp.commRate*100,views:inp.views,qty:inp.qty,retRate:inp.retRate*100,
+        saver:saverOn,supplier:'',link:''});
+      updateCount();showToast('"'+kw+'" 추가됨');
+    }
+    saveItems();
+    document.getElementById('c_keyword').value='';
+    document.getElementById('c_selling').value='';
+    document.getElementById('c_cny').value='';
+    document.getElementById('c_costKrw').value='';
+    document.getElementById('c_shipping').value='';
+    document.getElementById('c_views').value='';
+    cnyChanged(); calcMargin();
+  }
+
+  function updateCount(){document.getElementById('listCount').textContent=items.length;}
+
+  function showToast(msg,err){
+    const t=document.getElementById('toast');
+    t.textContent=msg;t.style.background=err?'var(--red)':'var(--accent)';
+    t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);
+  }
+
+  function renderList(){
+    const c=document.getElementById('listContainer');
+    if(!items.length){c.innerHTML='<div class="empty-state">마진 계산기에서 상품을 추가해보세요</div>';return;}
+    let h=`<table class="tbl"><thead><tr><th>#</th><th>키워드</th><th>판매가</th><th>원가(¥)</th><th>원가(₩)</th><th>마진</th><th>마진율</th><th>세이버</th><th>공급처</th><th>링크</th><th></th></tr></thead><tbody>`;
+    items.forEach((it,i)=>{
+      const r=compute(it.selling,it.cost,it.shipping,it.commRate/100,it.views,it.qty,it.retRate/100);
+      const pc=r.margin>0?'pos':r.margin<0?'neg':'zero';
+      h+=`<tr><td>${i+1}</td><td style="font-weight:600">${esc(it.keyword)}</td><td>${fmt(it.selling)}원</td>
+        <td>${it.costCny?it.costCny.toFixed(2)+'¥':'-'}</td><td>${fmt(it.cost)}원</td>
+        <td><span class="pill ${pc}">${fmt(r.margin)}원</span></td>
+        <td class="${sc(r.marginRate)}" style="font-weight:600">${pct(r.marginRate)}</td>
+        <td>${it.saver?'<span style="color:var(--accent);font-weight:700">ON</span>':'<span style="color:var(--text3)">OFF</span>'}</td>
+        <td><input class="il" value="${ea(it.supplier)}" placeholder="1688" data-i="${i}" data-f="supplier" oninput="uf(this)"></td>
+        <td><input class="il" value="${ea(it.link)}" placeholder="https://..." data-i="${i}" data-f="link" oninput="uf(this)" style="font-size:11px"></td>
+        <td><div class="acts"><button onclick="tog(${it.id})">${expandedId===it.id?'접기':'상세'}</button><button onclick="editItem(${it.id})">수정</button><button class="dl" onclick="rm(${it.id})">삭제</button></div></td></tr>`;
+      if(expandedId===it.id){
+        h+=`<tr class="exp-row"><td colspan="11"><div class="exp-inner">
+          <div class="exp-sec"><h5>개당 비용</h5>
+            <div class="dr"><span class="k">입출고배송비</span><span class="v">${fmt(it.shipping)}원</span></div>
+            <div class="dr"><span class="k">입출고 VAT</span><span class="v">${fmt(r.shippingVat)}원</span></div>
+            <div class="dr"><span class="k">판매수수료</span><span class="v">${fmt(r.commission)}원</span></div>
+            <div class="dr"><span class="k">수수료 VAT</span><span class="v">${fmt(r.commissionVat)}원</span></div>
+            <div class="dr"><span class="k">부가세</span><span class="v">${fmt(r.vat)}원</span></div></div>
+          <div class="exp-sec"><h5>반품 / 월 예상</h5>
+            <div class="dr"><span class="k">반품회수비+VAT</span><span class="v">${fmt(r.returnFee+r.returnFeeVat)}원</span></div>
+            <div class="dr"><span class="k">재입고비+VAT</span><span class="v">${fmt(r.restockFee+r.restockFeeVat)}원</span></div>
+            <div class="dr"><span class="k">월판매량</span><span class="v">${r.estQty.toFixed(1)}개</span></div>
+            <div class="dr"><span class="k">월매출</span><span class="v">${fmt(r.estRev)}원</span></div>
+            <div class="dr"><span class="k">월마진</span><span class="v ${sc(r.estMargin)}">${fmt(r.estMargin)}원</span></div></div>
+          <div class="exp-sec"><h5>총 마진 (${r.qty}개)</h5>
+            <div class="dr"><span class="k">총매출</span><span class="v">${fmt(r.totalRev)}원</span></div>
+            <div class="dr"><span class="k">총비용</span><span class="v">${fmt(r.totalCost+r.totalShip+r.totalShipVat+r.totalComm+r.totalCommVat)}원</span></div>
+            <div class="dr"><span class="k">총반품</span><span class="v">${fmt(r.totalRetFee+r.totalRetFeeVat+r.totalRestock+r.totalRestockVat)}원</span></div>
+            <div class="dr"><span class="k">총부가세</span><span class="v">${fmt(r.totalVat)}원</span></div>
+            <div class="dr" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--border)"><span class="k" style="font-weight:700;color:var(--text)">총마진</span><span class="v ${sc(r.totalMargin)}" style="font-size:13px">${fmt(r.totalMargin)}원 (${pct(r.totalMarginRate)})</span></div></div>
+        </div></td></tr>`;
+      }
+    });
+    h+='</tbody></table>';c.innerHTML=h;
+  }
+
+  function editItem(id){
+    const it=items.find(i=>i.id===id);
+    if(!it)return;
+    editingId=id;
+    document.getElementById('c_keyword').value=it.keyword;
+    document.getElementById('c_selling').value=it.selling||'';
+    document.getElementById('c_shipping').value=it.shipping||'';
+    document.getElementById('c_commRate').value=it.commRate||'';
+    document.getElementById('c_views').value=it.views||'';
+    document.getElementById('c_retRate').value=it.retRate||'';
+    if(it.costCny){
+      setCurrency('cny');
+      document.getElementById('c_cny').value=it.costCny;
+      document.getElementById('c_costKrw').value='';
+      cnyChanged();
+    }else{
+      setCurrency('krw');
+      document.getElementById('c_costKrw').value=it.cost||'';
+      document.getElementById('c_cny').value='';
+    }
+    if(it.saver&&!saverOn) toggleSaver();
+    else if(!it.saver&&saverOn) toggleSaver();
+    const btn=document.getElementById('btnAddList');
+    btn.textContent='수정 완료';
+    btn.style.background='var(--accent-dark)';
+    switchTab('calc');
+    calcMargin();
+  }
+
+  function clearEditMode(){
+    editingId=null;
+    const btn=document.getElementById('btnAddList');
+    btn.textContent='리스트 추가';
+    btn.style.background='';
+  }
+
+  function uf(el){const i=+el.dataset.i,f=el.dataset.f;if(items[i]){items[i][f]=el.value;saveItems();}}
+  function tog(id){expandedId=expandedId===id?null:id;renderList();}
+  function rm(id){items=items.filter(i=>i.id!==id);if(editingId===id)clearEditMode();saveItems();updateCount();renderList();}
+  function clearAll(){if(!items.length||!confirm('전체 삭제하시겠습니까?'))return;items=[];expandedId=null;saveItems();updateCount();renderList();}
+
+  function exportCSV(){
+    if(!items.length){showToast('내보낼 상품이 없습니다',true);return;}
+    const hd=['SEQ','키워드','판매가','원가(¥)','원가(₩)','배송비','수수료(%)','마진','마진율','세이버','28일조회수','월판매량','월매출','월마진','판매량','반품율','총매출','총마진','총마진율','공급처','링크'];
+    const rows=items.map((it,i)=>{const r=compute(it.selling,it.cost,it.shipping,it.commRate/100,it.views,it.qty,it.retRate/100);
+      return[i+1,it.keyword,it.selling,it.costCny||0,it.cost,it.shipping,it.commRate,Math.round(r.margin),pct(r.marginRate),it.saver?'ON':'OFF',it.views,r.estQty.toFixed(1),Math.round(r.estRev),Math.round(r.estMargin),it.qty,it.retRate,Math.round(r.totalRev),Math.round(r.totalMargin),pct(r.totalMarginRate),it.supplier,it.link];});
+    const csv='\uFEFF'+[hd,...rows].map(r=>r.map(v=>{const s=String(v);return s.includes(',')||s.includes('"')?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+    a.download='소싱리스트_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  }
+
+  function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  function ea(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  calcMargin();
+  updateCount();
+</script>
+</body>
+</html>
