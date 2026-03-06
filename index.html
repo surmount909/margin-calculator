@@ -524,7 +524,7 @@
 
     .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .tbl {
-      min-width: 1100px; width: 100%; border-collapse: separate; border-spacing: 0;
+      min-width: 1200px; width: 100%; border-collapse: separate; border-spacing: 0;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); overflow: hidden;
     }
@@ -561,6 +561,7 @@
 
     .tbl .il:focus { border-color: var(--accent); }
     .tbl .il-sm { min-width: 50px; max-width: 80px; padding: 3px 5px; font-size: 11px; }
+    .tbl .il-xs { min-width: 40px; max-width: 55px; padding: 3px 4px; font-size: 10px; text-align: center; }
 
     .saver-toggle {
       padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;
@@ -822,7 +823,6 @@
   <div class="list-top">
     <h2>소싱 리스트</h2>
     <div class="list-btns">
-      <span style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:4px;">환율 ×<input type="number" id="listExRate" value="320" step="1" style="width:60px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center" onchange="listRateChanged()"></span>
       <button class="btn-sm" onclick="exportCSV()">CSV 내보내기</button>
       <button class="btn-sm danger" onclick="clearAll()">전체 삭제</button>
     </div>
@@ -900,11 +900,7 @@
     document.getElementById('tabList').classList.toggle('active', tab === 'list');
     document.getElementById('pageCalc').classList.toggle('active', tab === 'calc');
     document.getElementById('pageList').classList.toggle('active', tab === 'list');
-    if (tab === 'list') {
-      const le=document.getElementById('listExRate');
-      if(le) le.value=document.getElementById('c_exRate').value;
-      renderList();
-    }
+    if (tab === 'list') renderList();
     localStorage.setItem('activeTab', tab);
   }
 
@@ -1058,7 +1054,7 @@
     }else{
       items.push({id:Date.now(),keyword:kw,selling:inp.selling,costCny:cny,cost:inp.cost,shipping:inp.shipping,
         commRate:inp.commRate*100,views:inp.views,qty:inp.qty,retRate:inp.retRate*100,
-        saver:saverOn,supplier:'',link:''});
+        exRate:getExRate(),saver:saverOn,supplier:'',link:''});
       updateCount();showToast('"'+kw+'" 추가됨');
     }
     saveItems();
@@ -1082,8 +1078,9 @@
   function renderList(){
     const c=document.getElementById('listContainer');
     if(!items.length){c.innerHTML='<div class="empty-state">마진 계산기에서 상품을 추가해보세요</div>';return;}
-    let h=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>키워드</th><th>판매가</th><th>원가(¥)</th><th>원가(₩)</th><th>마진</th><th>마진율</th><th>예상 월매출</th><th>예상 월마진</th><th>세이버</th><th>공급처</th><th>링크</th><th></th></tr></thead><tbody>`;
+    let h=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>키워드</th><th>판매가</th><th>원가(¥)</th><th>환율</th><th>원가(₩)</th><th>개당 마진</th><th>마진율</th><th>예상 월매출</th><th>예상 월마진</th><th>세이버</th><th>공급처</th><th>링크</th><th></th></tr></thead><tbody>`;
     items.forEach((it,i)=>{
+      if(!it.exRate) it.exRate=getExRate();
       const retR=it.saver?0:it.retRate/100;
       const r=compute(it.selling,it.cost,it.shipping,it.commRate/100,it.views,it.qty,retR);
       const epc=r.estMargin>0?'pos':r.estMargin<0?'neg':'zero';
@@ -1091,6 +1088,7 @@
         <td><input class="il" value="${ea(it.keyword)}" data-i="${i}" data-f="keyword" onchange="uf2(this)" style="font-weight:600;min-width:80px"></td>
         <td><input class="il il-sm" type="number" value="${it.selling||''}" data-i="${i}" data-f="selling" onchange="uf2(this)"></td>
         <td><input class="il il-sm" type="number" value="${it.costCny||''}" data-i="${i}" data-f="costCny" onchange="uf2(this)" step="0.01"></td>
+        <td><input class="il il-xs" type="number" value="${it.exRate||320}" data-i="${i}" data-f="exRate" onchange="uf2(this)"></td>
         <td><input class="il il-sm" type="number" value="${it.cost||''}" data-i="${i}" data-f="cost" onchange="uf2(this)"></td>
         <td style="color:var(--accent);font-weight:700;white-space:nowrap">${fmt(r.margin)}원</td>
         <td style="color:var(--accent);font-weight:700;white-space:nowrap">${pct(r.marginRate)}</td>
@@ -1101,7 +1099,7 @@
         <td><input class="il" value="${ea(it.link)}" placeholder="https://..." data-i="${i}" data-f="link" oninput="uf(this)" style="font-size:11px"></td>
         <td><div class="acts"><button onclick="tog(${it.id})">${expandedId===it.id?'접기':'상세'}</button><button class="dl" onclick="rm(${it.id})">삭제</button></div></td></tr>`;
       if(expandedId===it.id){
-        h+=`<tr class="exp-row"><td colspan="13"><div class="exp-inner">
+        h+=`<tr class="exp-row"><td colspan="14"><div class="exp-inner">
           <div class="exp-sec"><h5>개당 비용</h5>
             <div class="dr"><span class="k">입출고배송비</span><span class="v">${fmt(it.shipping)}원</span></div>
             <div class="dr"><span class="k">입출고 VAT</span><span class="v">${fmt(r.shippingVat)}원</span></div>
@@ -1173,7 +1171,8 @@
   function uf2(el){const i=+el.dataset.i,f=el.dataset.f;if(!items[i])return;const it=items[i];
     if(f==='keyword')it.keyword=el.value;
     else if(f==='selling')it.selling=parseFloat(el.value)||0;
-    else if(f==='costCny'){it.costCny=parseFloat(el.value)||0;it.cost=Math.round(it.costCny*getExRate());}
+    else if(f==='costCny'){it.costCny=parseFloat(el.value)||0;it.cost=Math.round(it.costCny*(it.exRate||getExRate()));}
+    else if(f==='exRate'){it.exRate=parseFloat(el.value)||320;if(it.costCny)it.cost=Math.round(it.costCny*it.exRate);}
     else if(f==='cost'){it.cost=parseFloat(el.value)||0;it.costCny=0;}
     saveItems();renderList();}
   function tog(id){expandedId=expandedId===id?null:id;renderList();}
