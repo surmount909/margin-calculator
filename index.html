@@ -522,20 +522,21 @@
     .btn-sm.danger { color: var(--red); border-color: transparent; background: var(--red-bg); }
     .btn-sm.danger:hover { background: #ffcdd2; }
 
+    .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .tbl {
-      width: 100%; border-collapse: separate; border-spacing: 0;
+      min-width: 1100px; width: 100%; border-collapse: separate; border-spacing: 0;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); overflow: hidden;
     }
 
     .tbl th {
-      text-align: left; padding: 8px 12px;
+      text-align: left; padding: 8px 10px; white-space: nowrap;
       font-size: 11px; font-weight: 600; color: var(--text2);
       background: var(--surface2); border-bottom: 1px solid var(--border);
     }
 
     .tbl td {
-      padding: 8px 12px; font-size: 12px;
+      padding: 8px 10px; font-size: 12px; white-space: nowrap;
       border-bottom: 1px solid var(--border);
     }
 
@@ -1076,7 +1077,7 @@
   function renderList(){
     const c=document.getElementById('listContainer');
     if(!items.length){c.innerHTML='<div class="empty-state">마진 계산기에서 상품을 추가해보세요</div>';return;}
-    let h=`<table class="tbl"><thead><tr><th>#</th><th>키워드</th><th>판매가</th><th>원가(¥)</th><th>원가(₩)</th><th>마진</th><th>마진율</th><th>예상 월매출</th><th>예상 월마진</th><th>세이버</th><th>공급처</th><th>링크</th><th></th></tr></thead><tbody>`;
+    let h=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>키워드</th><th>판매가</th><th>원가(¥)</th><th>원가(₩)</th><th>마진</th><th>마진율</th><th>예상 월매출</th><th>예상 월마진</th><th>세이버</th><th>공급처</th><th>링크</th><th></th></tr></thead><tbody>`;
     items.forEach((it,i)=>{
       const r=compute(it.selling,it.cost,it.shipping,it.commRate/100,it.views,it.qty,it.retRate/100);
       const epc=r.estMargin>0?'pos':r.estMargin<0?'neg':'zero';
@@ -1116,7 +1117,7 @@
         </div></td></tr>`;
       }
     });
-    h+='</tbody></table>';c.innerHTML=h;
+    h+='</tbody></table></div>';c.innerHTML=h;
   }
 
   function editItem(id){
