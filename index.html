@@ -822,6 +822,7 @@
   <div class="list-top">
     <h2>소싱 리스트</h2>
     <div class="list-btns">
+      <span style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:4px;">환율 ×<input type="number" id="listExRate" value="320" step="1" style="width:60px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center" onchange="listRateChanged()"></span>
       <button class="btn-sm" onclick="exportCSV()">CSV 내보내기</button>
       <button class="btn-sm danger" onclick="clearAll()">전체 삭제</button>
     </div>
@@ -899,7 +900,11 @@
     document.getElementById('tabList').classList.toggle('active', tab === 'list');
     document.getElementById('pageCalc').classList.toggle('active', tab === 'calc');
     document.getElementById('pageList').classList.toggle('active', tab === 'list');
-    if (tab === 'list') renderList();
+    if (tab === 'list') {
+      const le=document.getElementById('listExRate');
+      if(le) le.value=document.getElementById('c_exRate').value;
+      renderList();
+    }
     localStorage.setItem('activeTab', tab);
   }
 
@@ -1079,7 +1084,8 @@
     if(!items.length){c.innerHTML='<div class="empty-state">마진 계산기에서 상품을 추가해보세요</div>';return;}
     let h=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>키워드</th><th>판매가</th><th>원가(¥)</th><th>원가(₩)</th><th>마진</th><th>마진율</th><th>예상 월매출</th><th>예상 월마진</th><th>세이버</th><th>공급처</th><th>링크</th><th></th></tr></thead><tbody>`;
     items.forEach((it,i)=>{
-      const r=compute(it.selling,it.cost,it.shipping,it.commRate/100,it.views,it.qty,it.retRate/100);
+      const retR=it.saver?0:it.retRate/100;
+      const r=compute(it.selling,it.cost,it.shipping,it.commRate/100,it.views,it.qty,retR);
       const epc=r.estMargin>0?'pos':r.estMargin<0?'neg':'zero';
       h+=`<tr><td>${i+1}</td>
         <td><input class="il" value="${ea(it.keyword)}" data-i="${i}" data-f="keyword" onchange="uf2(this)" style="font-weight:600;min-width:80px"></td>
@@ -1158,6 +1164,12 @@
 
   function uf(el){const i=+el.dataset.i,f=el.dataset.f;if(items[i]){items[i][f]=el.value;saveItems();}}
   function togSaver(i){if(!items[i])return;items[i].saver=!items[i].saver;saveItems();renderList();}
+  function listRateChanged(){
+    const rate=parseFloat(document.getElementById('listExRate').value)||320;
+    document.getElementById('c_exRate').value=rate;
+    items.forEach(it=>{if(it.costCny)it.cost=Math.round(it.costCny*rate);});
+    saveItems();renderList();
+  }
   function uf2(el){const i=+el.dataset.i,f=el.dataset.f;if(!items[i])return;const it=items[i];
     if(f==='keyword')it.keyword=el.value;
     else if(f==='selling')it.selling=parseFloat(el.value)||0;
@@ -1171,7 +1183,7 @@
   function exportCSV(){
     if(!items.length){showToast('내보낼 상품이 없습니다',true);return;}
     const hd=['SEQ','키워드','판매가','원가(¥)','원가(₩)','배송비','수수료(%)','마진','마진율','세이버','28일조회수','월판매량','월매출','월마진','판매량','반품율','총매출','총마진','총마진율','공급처','링크'];
-    const rows=items.map((it,i)=>{const r=compute(it.selling,it.cost,it.shipping,it.commRate/100,it.views,it.qty,it.retRate/100);
+    const rows=items.map((it,i)=>{const retR=it.saver?0:it.retRate/100;const r=compute(it.selling,it.cost,it.shipping,it.commRate/100,it.views,it.qty,retR);
       return[i+1,it.keyword,it.selling,it.costCny||0,it.cost,it.shipping,it.commRate,Math.round(r.margin),pct(r.marginRate),it.saver?'ON':'OFF',it.views,r.estQty.toFixed(1),Math.round(r.estRev),Math.round(r.estMargin),it.qty,it.retRate,Math.round(r.totalRev),Math.round(r.totalMargin),pct(r.totalMarginRate),it.supplier,it.link];});
     const csv='\uFEFF'+[hd,...rows].map(r=>r.map(v=>{const s=String(v);return s.includes(',')||s.includes('"')?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
@@ -1206,6 +1218,7 @@
   window.uf = uf;
   window.uf2 = uf2;
   window.togSaver = togSaver;
+  window.listRateChanged = listRateChanged;
   window.tog = tog;
   window.rm = rm;
   window.clearAll = clearAll;
