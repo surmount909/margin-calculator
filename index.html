@@ -744,7 +744,7 @@
     <button class="tab active" id="tabCalc" onclick="switchTab('calc')">마진 계산기</button>
     <button class="tab" id="tabList" onclick="switchTab('list')">소싱 리스트 <span class="count" id="listCount">0</span></button>
   </div>
-  <div class="auth-area" id="authArea">
+  <div class="auth-area" id="authArea" style="opacity:0;transition:opacity 0.2s">
     <div class="auth-cta" id="authCta">
       <button class="btn-auth white" onclick="googleLogin()">로그인 / 가입</button>
       <div class="cta-sub" onclick="googleLogin()">지금 가입하고 무료이용하기 ✨</div>
@@ -928,6 +928,7 @@
     } else {
       area.innerHTML = `<div class="auth-cta"><button class="btn-auth white" onclick="googleLogin()">로그인 / 가입</button><div class="cta-sub" onclick="googleLogin()">지금 가입하고 무료이용하기 ✨</div></div>`;
     }
+    area.style.opacity='1';
     updateCount();
   });
 
