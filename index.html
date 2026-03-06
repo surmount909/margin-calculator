@@ -962,10 +962,16 @@
     const M=C-F-G-I-J-K-L;
     const N=C>0?M/C:0;
     const O=N!==0?(11000/N)/10000:0;
-    const Q=P*0.03, R=Q*C, S=Math.round(Q)*Math.round(M);
+    const Q=P*0.03, R=Q*C;
     const W=G*0.5, X=W*0.1;
     let Y; if(C<5000)Y=300;else if(C<10000)Y=400;else if(C<15000)Y=600;else if(C<20000)Y=800;else Y=1000;
     const Z=Y*0.1;
+    // 예상 월마진 (반품 포함, 수량=Q)
+    const eR=Q*C,eC=Q*F,eS=Q*G,eSV=eS*0.1,eCm=J*Q,eCmV=eCm*0.1;
+    const eRF=W*Q*V,eRFV=eRF*0.1,eRS=Y*Q*V,eRSV=eRS*0.1;
+    const eVat=((eR-eR/1.1)-(eC-eC/1.1))-eSV-eCmV-eRFV-eRSV;
+    const S=eR-eC-eS-eSV-eCm-eCmV-eRF-eRFV-eRS-eRSV-eVat;
+    // 총마진 (수량=U)
     const AA=C*U,AB=F*U,AC=G*U,AD=AC*0.1,AE=J*U,AF=AE*0.1;
     const AG=W*U*V,AH=AG*0.1,AI=Y*U*V,AJ=AI*0.1;
     const AK=((AA-AA/1.1)-(AB-AB/1.1))-AD-AF-AH-AJ;
