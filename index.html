@@ -892,6 +892,7 @@
     document.getElementById('pageCalc').classList.toggle('active', tab === 'calc');
     document.getElementById('pageList').classList.toggle('active', tab === 'list');
     if (tab === 'list') renderList();
+    localStorage.setItem('activeTab', tab);
   }
 
   // 세이버 토글
@@ -1203,6 +1204,9 @@
 
   calcMargin();
   updateCount();
+  // 저장된 탭 복원
+  const savedTab = localStorage.getItem('activeTab');
+  if (savedTab === 'list') switchTab('list');
 </script>
 </body>
 </html>
