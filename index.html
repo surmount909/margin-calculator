@@ -615,6 +615,28 @@
 
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    /* ===== EDIT MODAL ===== */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: 12px; padding: 24px; width: 90%; max-width: 420px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-height: 85vh; overflow-y: auto;
+    }
+    .modal h3 { margin: 0 0 16px; font-size: 16px; font-weight: 700; color: var(--text); }
+    .modal-field { margin-bottom: 10px; }
+    .modal-field label { display: block; font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 3px; }
+    .modal-field input { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; color: var(--text); background: var(--bg); box-sizing: border-box; }
+    .modal-field input:focus { outline: none; border-color: var(--accent); }
+    .modal-row { display: flex; gap: 8px; }
+    .modal-row .modal-field { flex: 1; }
+    .modal-btns { display: flex; gap: 8px; margin-top: 16px; }
+    .modal-btns button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .modal-btns .btn-save { background: var(--accent); color: #fff; }
+    .modal-btns .btn-cancel { background: var(--bg); color: var(--text2); border: 1px solid var(--border); }
+
     /* ===== AUTH ===== */
     .auth-area {
       margin-left: auto;
@@ -830,6 +852,37 @@
   <div id="listContainer"></div>
 </div>
 
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal">
+    <h3 id="editModalTitle">상품 수정</h3>
+    <div class="modal-field"><label>키워드</label><input id="em_keyword"></div>
+    <div class="modal-row">
+      <div class="modal-field"><label>판매가</label><input type="number" id="em_selling"></div>
+      <div class="modal-field"><label>입출고배송비</label><input type="number" id="em_shipping"></div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>원가 (¥)</label><input type="number" id="em_costCny" step="0.01"></div>
+      <div class="modal-field"><label>환율</label><input type="number" id="em_exRate"></div>
+      <div class="modal-field"><label>원가 (₩)</label><input type="number" id="em_cost"></div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>판매수수료 (%)</label><input type="number" id="em_commRate" step="0.1"></div>
+      <div class="modal-field"><label>반품율 (%)</label><input type="number" id="em_retRate" step="0.1"></div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>28일 조회수</label><input type="number" id="em_views"></div>
+      <div class="modal-field"><label>판매량</label><input type="number" id="em_qty"></div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>공급처</label><input id="em_supplier"></div>
+      <div class="modal-field"><label>링크</label><input id="em_link"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeEditModal()">취소</button>
+      <button class="btn-save" onclick="saveEditModal()">저장</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -1097,7 +1150,7 @@
         <td><button class="saver-toggle ${it.saver?'on':''}" onclick="togSaver(${i})">${it.saver?'ON':'OFF'}</button></td>
         <td><input class="il" value="${ea(it.supplier)}" placeholder="1688" data-i="${i}" data-f="supplier" oninput="uf(this)"></td>
         <td><input class="il" value="${ea(it.link)}" placeholder="https://..." data-i="${i}" data-f="link" oninput="uf(this)" style="font-size:11px"></td>
-        <td><div class="acts"><button onclick="tog(${it.id})">${expandedId===it.id?'접기':'상세'}</button><button class="dl" onclick="rm(${it.id})">삭제</button></div></td></tr>`;
+        <td><div class="acts"><button onclick="tog(${it.id})">${expandedId===it.id?'접기':'상세'}</button><button onclick="openEditModal(${it.id})">수정</button><button class="dl" onclick="rm(${it.id})">삭제</button></div></td></tr>`;
       if(expandedId===it.id){
         h+=`<tr class="exp-row"><td colspan="14"><div class="exp-inner">
           <div class="exp-sec"><h5>개당 비용</h5>
@@ -1124,33 +1177,45 @@
     h+='</tbody></table></div>';c.innerHTML=h;
   }
 
-  function editItem(id){
-    const it=items.find(i=>i.id===id);
-    if(!it)return;
-    editingId=id;
-    document.getElementById('c_keyword').value=it.keyword;
-    document.getElementById('c_selling').value=it.selling||'';
-    document.getElementById('c_shipping').value=it.shipping||'';
-    document.getElementById('c_commRate').value=it.commRate||'';
-    document.getElementById('c_views').value=it.views||'';
-    document.getElementById('c_retRate').value=it.retRate||'';
-    if(it.costCny){
-      setCurrency('cny');
-      document.getElementById('c_cny').value=it.costCny;
-      document.getElementById('c_costKrw').value='';
-      cnyChanged();
-    }else{
-      setCurrency('krw');
-      document.getElementById('c_costKrw').value=it.cost||'';
-      document.getElementById('c_cny').value='';
-    }
-    if(it.saver&&!saverOn) toggleSaver();
-    else if(!it.saver&&saverOn) toggleSaver();
-    const btn=document.getElementById('btnAddList');
-    btn.textContent='수정 완료';
-    btn.style.background='var(--accent-dark)';
-    switchTab('calc');
-    calcMargin();
+  let editModalId=null;
+  function openEditModal(id){
+    const it=items.find(i=>i.id===id);if(!it)return;
+    editModalId=id;
+    document.getElementById('editModalTitle').textContent='"'+it.keyword+'" 수정';
+    document.getElementById('em_keyword').value=it.keyword||'';
+    document.getElementById('em_selling').value=it.selling||'';
+    document.getElementById('em_shipping').value=it.shipping||'';
+    document.getElementById('em_costCny').value=it.costCny||'';
+    document.getElementById('em_exRate').value=it.exRate||320;
+    document.getElementById('em_cost').value=it.cost||'';
+    document.getElementById('em_commRate').value=it.commRate||'';
+    document.getElementById('em_retRate').value=it.retRate||'';
+    document.getElementById('em_views').value=it.views||'';
+    document.getElementById('em_qty').value=it.qty||'';
+    document.getElementById('em_supplier').value=it.supplier||'';
+    document.getElementById('em_link').value=it.link||'';
+    document.getElementById('editModal').classList.add('show');
+  }
+  function closeEditModal(){
+    document.getElementById('editModal').classList.remove('show');
+    editModalId=null;
+  }
+  function saveEditModal(){
+    const it=items.find(i=>i.id===editModalId);if(!it)return;
+    it.keyword=document.getElementById('em_keyword').value.trim()||it.keyword;
+    it.selling=parseFloat(document.getElementById('em_selling').value)||0;
+    it.shipping=parseFloat(document.getElementById('em_shipping').value)||0;
+    it.costCny=parseFloat(document.getElementById('em_costCny').value)||0;
+    it.exRate=parseFloat(document.getElementById('em_exRate').value)||320;
+    it.cost=it.costCny?Math.round(it.costCny*it.exRate):(parseFloat(document.getElementById('em_cost').value)||0);
+    it.commRate=parseFloat(document.getElementById('em_commRate').value)||0;
+    it.retRate=parseFloat(document.getElementById('em_retRate').value)||0;
+    it.views=parseFloat(document.getElementById('em_views').value)||0;
+    it.qty=parseFloat(document.getElementById('em_qty').value)||Math.round(it.views*0.03);
+    it.supplier=document.getElementById('em_supplier').value;
+    it.link=document.getElementById('em_link').value;
+    saveItems();renderList();closeEditModal();
+    showToast('"'+it.keyword+'" 수정됨');
   }
 
   function clearEditMode(){
@@ -1213,7 +1278,9 @@
   window.calcMargin = calcMargin;
   window.resetCalc = resetCalc;
   window.addToList = addToList;
-  window.editItem = editItem;
+  window.openEditModal = openEditModal;
+  window.closeEditModal = closeEditModal;
+  window.saveEditModal = saveEditModal;
   window.uf = uf;
   window.uf2 = uf2;
   window.togSaver = togSaver;
