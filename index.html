@@ -559,6 +559,13 @@
     }
 
     .tbl .il:focus { border-color: var(--accent); }
+    .tbl .il-sm { min-width: 50px; max-width: 80px; padding: 3px 5px; font-size: 11px; }
+
+    .saver-toggle {
+      padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text3); cursor: pointer;
+    }
+    .saver-toggle.on { background: var(--accent); color: #fff; border-color: var(--accent); }
 
     .acts { display: flex; gap: 4px; }
 
@@ -898,6 +905,7 @@
   // 세이버 토글
   function toggleSaver() {
     saverOn = !saverOn;
+    localStorage.setItem('ralph_saver', saverOn ? '1' : '0');
     const btn = document.getElementById('saverBtn');
     const inp = document.getElementById('c_retRate');
     btn.classList.toggle('active', saverOn);
@@ -1068,21 +1076,20 @@
   function renderList(){
     const c=document.getElementById('listContainer');
     if(!items.length){c.innerHTML='<div class="empty-state">마진 계산기에서 상품을 추가해보세요</div>';return;}
-    let h=`<table class="tbl"><thead><tr><th>#</th><th>키워드</th><th>판매가</th><th>원가(¥)</th><th>원가(₩)</th><th>마진</th><th>마진율</th><th>월매출</th><th>월마진</th><th>세이버</th><th>공급처</th><th>링크</th><th></th></tr></thead><tbody>`;
+    let h=`<table class="tbl"><thead><tr><th>#</th><th>키워드</th><th>판매가</th><th>원가(¥)</th><th>원가(₩)</th><th>마진</th><th>마진율</th><th>예상 월매출</th><th>예상 월마진</th><th>세이버</th><th>공급처</th><th>링크</th><th></th></tr></thead><tbody>`;
     items.forEach((it,i)=>{
       const r=compute(it.selling,it.cost,it.shipping,it.commRate/100,it.views,it.qty,it.retRate/100);
-      const pc=r.margin>0?'pos':r.margin<0?'neg':'zero';
       const epc=r.estMargin>0?'pos':r.estMargin<0?'neg':'zero';
       h+=`<tr><td>${i+1}</td>
         <td><input class="il" value="${ea(it.keyword)}" data-i="${i}" data-f="keyword" onchange="uf2(this)" style="font-weight:600;min-width:80px"></td>
-        <td><input class="il" type="number" value="${it.selling||''}" data-i="${i}" data-f="selling" onchange="uf2(this)" style="min-width:70px"></td>
-        <td><input class="il" type="number" value="${it.costCny||''}" data-i="${i}" data-f="costCny" onchange="uf2(this)" step="0.01" style="min-width:60px"></td>
-        <td><input class="il" type="number" value="${it.cost||''}" data-i="${i}" data-f="cost" onchange="uf2(this)" style="min-width:70px"></td>
-        <td><span class="pill ${pc}">${fmt(r.margin)}원</span></td>
-        <td class="${sc(r.marginRate)}" style="font-weight:600">${pct(r.marginRate)}</td>
-        <td>${fmt(r.estRev)}원</td>
+        <td><input class="il il-sm" type="number" value="${it.selling||''}" data-i="${i}" data-f="selling" onchange="uf2(this)"></td>
+        <td><input class="il il-sm" type="number" value="${it.costCny||''}" data-i="${i}" data-f="costCny" onchange="uf2(this)" step="0.01"></td>
+        <td><input class="il il-sm" type="number" value="${it.cost||''}" data-i="${i}" data-f="cost" onchange="uf2(this)"></td>
+        <td style="color:var(--accent);font-weight:700;white-space:nowrap">${fmt(r.margin)}원</td>
+        <td style="color:var(--accent);font-weight:700;white-space:nowrap">${pct(r.marginRate)}</td>
+        <td><span class="pill pos">${fmt(r.estRev)}원</span></td>
         <td><span class="pill ${epc}">${fmt(r.estMargin)}원</span></td>
-        <td>${it.saver?'<span style="color:var(--accent);font-weight:700">ON</span>':'<span style="color:var(--text3)">OFF</span>'}</td>
+        <td><button class="saver-toggle ${it.saver?'on':''}" onclick="togSaver(${i})">${it.saver?'ON':'OFF'}</button></td>
         <td><input class="il" value="${ea(it.supplier)}" placeholder="1688" data-i="${i}" data-f="supplier" oninput="uf(this)"></td>
         <td><input class="il" value="${ea(it.link)}" placeholder="https://..." data-i="${i}" data-f="link" oninput="uf(this)" style="font-size:11px"></td>
         <td><div class="acts"><button onclick="tog(${it.id})">${expandedId===it.id?'접기':'상세'}</button><button class="dl" onclick="rm(${it.id})">삭제</button></div></td></tr>`;
@@ -1149,6 +1156,7 @@
   }
 
   function uf(el){const i=+el.dataset.i,f=el.dataset.f;if(items[i]){items[i][f]=el.value;saveItems();}}
+  function togSaver(i){if(!items[i])return;items[i].saver=!items[i].saver;saveItems();renderList();}
   function uf2(el){const i=+el.dataset.i,f=el.dataset.f;if(!items[i])return;const it=items[i];
     if(f==='keyword')it.keyword=el.value;
     else if(f==='selling')it.selling=parseFloat(el.value)||0;
@@ -1196,12 +1204,15 @@
   window.editItem = editItem;
   window.uf = uf;
   window.uf2 = uf2;
+  window.togSaver = togSaver;
   window.tog = tog;
   window.rm = rm;
   window.clearAll = clearAll;
   window.exportCSV = exportCSV;
   window.showToast = showToast;
 
+  // 세이버 상태 복원
+  if (localStorage.getItem('ralph_saver') === '1' && !saverOn) toggleSaver();
   calcMargin();
   updateCount();
   // 저장된 탭 복원
